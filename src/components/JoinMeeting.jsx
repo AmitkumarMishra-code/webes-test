@@ -194,7 +194,7 @@ export default function JoinMeeting() {
                  * We default back to previous stream in this case.
                  */
                 currentMediaStreams = [localStream || currLocalStream, localShare || currLocalShare];
-
+                meeting.updateShare({sendShare: true, receiveShare:true, stream: localShare})
                 return currentMediaStreams;
             })
             .then(([localStream]) => {
@@ -203,7 +203,7 @@ export default function JoinMeeting() {
                     localStreamRef.current.srcObject = localStream;
                     addMedia(meeting)
                 }
-
+                
                 return { localStream };
             })
             .catch((error) => {

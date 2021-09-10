@@ -163,7 +163,7 @@ export default function App() {
           switch (media.type) {
             case 'remoteVideo':
                 console.log('remote video')
-            //   meetingStreamsRemotelVideo.srcObject = media.stream;
+                remoteStreamRef.current.srcObject = media.stream;
               break;
             case 'remoteAudio':
                 console.log('remote audio')
@@ -203,7 +203,7 @@ export default function App() {
              * We default back to previous stream in this case.
              */
             currentMediaStreams = [localStream || currLocalStream, localShare || currLocalShare];
-      
+            meeting.updateShare({sendShare: true, receiveShare:true, stream: localShare})
             return currentMediaStreams;
           })
           .then(([localStream]) => {
