@@ -18,7 +18,7 @@ export default function JoinMeeting() {
     const [connected, setConnected] = useState(false)
     const [registered, setRegistered] = useState(false)
     const [unregistered, setUnregistered] = useState(null)
-    const [meetingObject, setMeetingObject] = useState(null)
+    // const [meetingObject, setMeetingObject] = useState(null)
     const [meetingCurrentDetails, setMeetingCurrentDetails] = useState(null)
     const localStreamRef = useRef()
     const remoteStreamRef = useRef()
@@ -117,18 +117,18 @@ export default function JoinMeeting() {
     // }
 
     function leaveMeeting() {
-        if (!meetingObject) {
-            throw new Error(`meeting is invalid or no longer exists`);
-        }
+        // if (!meetingObject) {
+        //     throw new Error(`meeting is invalid or no longer exists`);
+        // }
 
-        meetingObject.leave()
-            .then(() => {
-                setMeetingCurrentDetails(null)
-            });
+        // meetingObject.leave()
+        //     .then(() => {
+        //         setMeetingCurrentDetails(null)
+        //     });
     }
 
-    function addMedia() {
-        const meeting = meetingObject;
+    function addMedia(meeting) {
+        // const meeting = meetingObject;
         const [localStream, localShare] = currentMediaStreams;
 
         console.log('MeetingStreams#addMedia()');
@@ -171,8 +171,8 @@ export default function JoinMeeting() {
         });
     }
 
-    function getMediaStreams(mediaSettings, audioVideoInputDevices = {}) {
-        const meeting = meetingObject;
+    function getMediaStreams(mediaSettings, audioVideoInputDevices = {}, meeting) {
+        // const meeting = meetingObject;
 
         console.log('MeetingControls#getMediaStreams()');
 
@@ -201,7 +201,7 @@ export default function JoinMeeting() {
                 if (localStream && mediaSettings.sendVideo) {
                     console.log('localstream')
                     localStreamRef.current.srcObject = localStream;
-                    addMedia()
+                    addMedia(meeting)
                 }
 
                 return { localStream };
@@ -218,14 +218,13 @@ export default function JoinMeeting() {
     const joinMeetingHandler = async() => {
         conversationURL = meetingIdRef.current.value
         let myMeeting = await webex.meetings.create(conversationURL)
-        setMeetingObject(myMeeting)
+        // setMeetingObject(myMeeting)
         myMeeting.join()
             .then(() => {
                 setMeetingCurrentDetails(myMeeting.destination ||
                     myMeeting.sipUri ||
                     myMeeting.id)
-                getMediaStreams(mediaSettings, {})
-                // meetingsLeaveElm.onclick = () => leaveMeeting(meetingObject.id);
+                getMediaStreams(mediaSettings, {}, myMeeting)
             });
     }
 
