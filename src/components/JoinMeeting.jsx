@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 const accessToken = 'NTA5MTUyZDMtZTZkYS00MmNiLWJmYTktMjk0ZDc5NjllMGE1OGFkZmQ1ZmEtMDFj_P0A1_a7012a36-a278-4b69-929e-ec5cc7b86d17';
 let webex
 let currentMediaStreams = []
+let conversationURL = 'https://conv-r.wbx2.com/conversation/api/v1/conversations/3809de60-122a-11ec-a32a-13d19edd46e0'
 let mediaSettings = {
     receiveAudio: true,
     receiveVideo: true,
@@ -70,10 +71,6 @@ export default function JoinMeeting() {
             if (type === 'INCOMING') {
                 const newMeeting = m.meeting;
                 newMeeting.acknowledge(type);
-                newMeeting.join().then(() => {
-                    getMediaStreams(mediaSettings, {})
-                })
-                setMeetingObject(newMeeting)
             }
         });
     }
@@ -99,7 +96,6 @@ export default function JoinMeeting() {
     //     if (!meetingObject) {
     //         throw new Error(`meeting ${meetingObject.id} is invalid or no longer exists`);
     //     }
-
     //     // const joinOptions = {
     //     //     pin: '5683',
     //     //     moderator: true,
@@ -110,21 +106,20 @@ export default function JoinMeeting() {
     //     //     receiveTranscription: false
     //     // };
 
-    //     meetingObject.join()
-    //         .then(() => {
-    //             setMeetingCurrentDetails(meetingObject.destination ||
-    //                 meetingObject.sipUri ||
-    //                 meetingObject.id)
-    //             getMediaStreams(mediaSettings, {})
-    //             // meetingsLeaveElm.onclick = () => leaveMeeting(meetingObject.id);
-    //         });
+    // meetingObject.join()
+    // .then(() => {
+    //     setMeetingCurrentDetails(meetingObject.destination ||
+    //         meetingObject.sipUri ||
+    //         meetingObject.id)
+    //     getMediaStreams(mediaSettings, {})
+    //     // meetingsLeaveElm.onclick = () => leaveMeeting(meetingObject.id);
+    // });
     // }
 
     function leaveMeeting() {
         if (!meetingObject) {
             throw new Error(`meeting is invalid or no longer exists`);
         }
-
 
         meetingObject.leave()
             .then(() => {
@@ -219,14 +214,20 @@ export default function JoinMeeting() {
             });
     }
 
-    // function getCurrentMeeting() {
-    //     const meetings = webex.meetings.getAllMeetings();
-    //     setMeetingObject(meetings[Object.keys(meetings)[0]]);
-    // }
 
-    // const getMeeting = () => {
-
-    // }
+    const joinMeetingHandler = async() => {
+        conversationURL = meetingIdRef.current.value
+        let myMeeting = webex.meetings.create(conversationURL)
+        setMeetingObject(myMeeting)
+        myMeeting.join()
+            .then(() => {
+                setMeetingCurrentDetails(myMeeting.destination ||
+                    myMeeting.sipUri ||
+                    myMeeting.id)
+                getMediaStreams(mediaSettings, {})
+                // meetingsLeaveElm.onclick = () => leaveMeeting(meetingObject.id);
+            });
+    }
 
 
     useEffect(() => {
@@ -240,12 +241,12 @@ export default function JoinMeeting() {
             {registered ? <p>Registered</p> : <p>Registering...</p>}
             <button onClick={unregister}>Unregister</button>
             {unregistered && <p>Unregistered</p>}
-            <label style={{ marginRight: '2rem' }}>Meeting Id : </label>
+            <label style={{ marginRight: '2rem' }}>Conversation URL : </label>
             <input type='text' placeholder='meeting id' ref={meetingIdRef} />
-            <button>Submit</button>
+            <button onClick={joinMeetingHandler}>Join</button>
             {meetingCurrentDetails && <p>{meetingCurrentDetails}</p>}
-            <button onClick = {leaveMeeting}>Leave</button>
-            
+            <button onClick={leaveMeeting}>Leave</button>
+
             <div style={{ width: '30vw', height: '20vh' }}>
                 <video className='localstream' id='localstream' ref={localStreamRef} autoPlay playsInline></video>
             </div>
