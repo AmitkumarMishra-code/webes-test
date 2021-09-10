@@ -217,7 +217,7 @@ export default function JoinMeeting() {
 
     const joinMeetingHandler = async() => {
         conversationURL = meetingIdRef.current.value
-        let myMeeting = webex.meetings.create(conversationURL)
+        let myMeeting = await webex.meetings.create(conversationURL)
         setMeetingObject(myMeeting)
         myMeeting.join()
             .then(() => {
