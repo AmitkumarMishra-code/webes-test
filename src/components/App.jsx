@@ -1,16 +1,16 @@
 // /* eslint-disable no-undef */
 import Webex from 'webex'
 import { useEffect, useRef, useState } from 'react';
-const accessToken = 'NTA5MTUyZDMtZTZkYS00MmNiLWJmYTktMjk0ZDc5NjllMGE1OGFkZmQ1ZmEtMDFj_P0A1_a7012a36-a278-4b69-929e-ec5cc7b86d17';
+const accessToken = 'OTI3NDZmNmQtZjFjNi00NWI2LTgxOTAtYmMzMGMzODdjOWMyZjFjNTIzNmYtYjE3_P0A1_a7012a36-a278-4b69-929e-ec5cc7b86d17';
 let webex
 let currentMediaStreams = []
 let mediaSettings = {
     receiveAudio: true,
-    receiveVideo:true,
-    receiveShare:true,
-    sendAudio:true,
-    sendVideo:true,
-    sendShare:false
+    receiveVideo: true,
+    receiveShare: true,
+    sendAudio: true,
+    sendVideo: true,
+    sendShare: false
 }
 export default function App() {
     const [connected, setConnected] = useState(false)
@@ -19,7 +19,8 @@ export default function App() {
     const [meetingObject, setMeetingObject] = useState(null)
     const [meetingCurrentDetails, setMeetingCurrentDetails] = useState(null)
     const localStreamRef = useRef()
-    const remoteStreamRef = useRef()
+    const remoteStreamVideoRef = useRef()
+    const remoteStreamAudioRef = useRef()
 
     const initWebex = () => {
         console.log('Authentication#initWebex()');
@@ -119,7 +120,7 @@ export default function App() {
                 setMeetingCurrentDetails(meetingObject.destination ||
                     meetingObject.sipUri ||
                     meetingObject.id)
-                    getMediaStreams(mediaSettings, {})
+                getMediaStreams(mediaSettings, {})
                 // meetingsLeaveElm.onclick = () => leaveMeeting(meetingObject.id);
             });
     }
@@ -128,101 +129,102 @@ export default function App() {
         if (!meetingObject) {
             throw new Error(`meeting is invalid or no longer exists`);
         }
-      
-     
-        meetingObject.leave()
-          .then(() => {
-            setMeetingCurrentDetails(null)
-          });
-      }
 
-      function addMedia() {
+
+        meetingObject.leave()
+            .then(() => {
+                setMeetingCurrentDetails(null)
+            });
+    }
+
+    function addMedia() {
         const meeting = meetingObject;
         const [localStream, localShare] = currentMediaStreams;
-      
+
         console.log('MeetingStreams#addMedia()');
-      
+
         if (!meeting) {
-          console.log('MeetingStreams#addMedia() :: no valid meeting object!');
+            console.log('MeetingStreams#addMedia() :: no valid meeting object!');
         }
-      
+
         meeting.addMedia({
-          localShare,
-          localStream,
-          mediaSettings: mediaSettings
+            localShare,
+            localStream,
+            mediaSettings: mediaSettings
         }).then(() => {
-          console.log('MeetingStreams#addMedia() :: successfully added media!');
+            console.log('MeetingStreams#addMedia() :: successfully added media!');
         }).catch((error) => {
-          console.log('MeetingStreams#addMedia() :: Error adding media!');
-          console.error(error);
+            console.log('MeetingStreams#addMedia() :: Error adding media!');
+            console.error(error);
         });
-      
+
         // Wait for media in order to show video/share
         meeting.on('media:ready', (media) => {
-          // eslint-disable-next-line default-case
-          switch (media.type) {
-            case 'remoteVideo':
-                console.log('remote video')
-                remoteStreamRef.current.srcObject = media.stream;
-              break;
-            case 'remoteAudio':
-                console.log('remote audio')
-            //   meetingStreamsRemoteAudio.srcObject = media.stream;
-              break;
-            case 'remoteShare':
-                console.log('remote share')
-            //   meetingStreamsRemoteShare.srcObject = media.stream;
-              break;
-            case 'localShare':
-              localStreamRef.current.srcObject = media.stream;
-              break;
-          }
+            // eslint-disable-next-line default-case
+            switch (media.type) {
+                case 'remoteVideo':
+                    console.log('remote video')
+                    remoteStreamVideoRef.current.srcObject = media.stream;
+                    break;
+                case 'remoteAudio':
+                    console.log('remote audio')
+                    remoteStreamAudioRef.current.srcObject = media.stream;
+                    break;
+                case 'remoteShare':
+                    console.log('remote share')
+                    //   meetingStreamsRemoteShare.srcObject = media.stream;
+                    break;
+                case 'localShare':
+                    console.log('in local share case')
+                    localStreamRef.current.srcObject = media.stream;
+                    break;
+            }
         });
-      }
+    }
 
-      function getMediaStreams(mediaSettings, audioVideoInputDevices = {}) {
+    function getMediaStreams(mediaSettings, audioVideoInputDevices = {}) {
         const meeting = meetingObject;
-      
+
         console.log('MeetingControls#getMediaStreams()');
-      
+
         if (!meeting) {
-          console.log('MeetingControls#getMediaStreams() :: no valid meeting object!');
-      
-          return Promise.reject(new Error('No valid meeting object.'));
+            console.log('MeetingControls#getMediaStreams() :: no valid meeting object!');
+
+            return Promise.reject(new Error('No valid meeting object.'));
         }
-      
+
         // Get local media streams
         return meeting.getMediaStreams(mediaSettings, audioVideoInputDevices)
-          .then(([localStream, localShare]) => {
-            console.log('MeetingControls#getMediaStreams() :: Successfully got following streams', localStream, localShare);
-            // Keep track of current stream in order to addMedia later.
-            const [currLocalStream, currLocalShare] = currentMediaStreams;
-      
-            /*
-             * In the event of updating only a particular stream, other streams return as undefined.
-             * We default back to previous stream in this case.
-             */
-            currentMediaStreams = [localStream || currLocalStream, localShare || currLocalShare];
-            meeting.updateShare({sendShare: true, receiveShare:true, stream: localShare})
-            return currentMediaStreams;
-          })
-          .then(([localStream]) => {
-            if (localStream && mediaSettings.sendVideo) {
-                console.log('localstream')
-              localStreamRef.current.srcObject = localStream;
-              addMedia()
-            }
-      
-            return {localStream};
-          })
-          .catch((error) => {
-            console.log('MeetingControls#getMediaStreams() :: Error getting streams!');
-            console.error();
-      
-            return Promise.reject(error);
-          });
-      }
-      
+            .then(([localStream, localShare]) => {
+                console.log('MeetingControls#getMediaStreams() :: Successfully got following streams', localStream, localShare);
+                // Keep track of current stream in order to addMedia later.
+                const [currLocalStream, currLocalShare] = currentMediaStreams;
+
+                /*
+                 * In the event of updating only a particular stream, other streams return as undefined.
+                 * We default back to previous stream in this case.
+                 */
+                currentMediaStreams = [localStream || currLocalStream, localShare || currLocalShare];
+                // meeting.updateShare({ sendShare: true, receiveShare: true, stream: localShare })
+                return currentMediaStreams;
+            })
+            .then(([localStream]) => {
+                if (localStream && mediaSettings.sendVideo) {
+                    console.log('localstream')
+                    localStreamRef.current.srcObject = localStream;
+                    addMedia()
+                }
+
+                return { localStream };
+            })
+            .catch((error) => {
+                console.log('MeetingControls#getMediaStreams() :: Error getting streams!');
+                console.error();
+
+                return Promise.reject(error);
+            });
+    }
+
 
     useEffect(() => {
         initWebex()
@@ -241,17 +243,26 @@ export default function App() {
                 {meetingObject && <p>{meetingObject.id} {meetingObject.meetingNumber} {meetingObject.phoneAndVideoSystemPassword} </p>}
             </div>
             <div>
-                <button onClick ={joinMeeting}>Join</button>
+                <button onClick={joinMeeting}>Join</button>
             </div>
             <div>
                 {meetingCurrentDetails && <p>{meetingCurrentDetails}</p>}
-                <button onClick = {leaveMeeting}>Leave</button>
+                <button onClick={leaveMeeting}>Leave</button>
             </div>
-            <div style ={{width:'30vw', height:'20vh'}}>
-                <video className = 'localstream' id ='localstream' ref = {localStreamRef} autoPlay playsInline></video>
-            </div>
-            <div style ={{width:'30vw', height:'20vh'}}>
-            <video className = 'remotestream' id ='remotestream' ref = {remoteStreamRef} autoPlay playsInline></video>
+            <div className="video" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', width: '100%' }}>
+                <div style={{ width: '40%', height: '15vh', padding:'2rem' }}>
+                    <fieldset>
+                        <legend>Local Video</legend>
+                        <video width='100%' height='100%' className='localstream' id='localstream' ref={localStreamRef} autoPlay playsInline></video>
+                    </fieldset>
+                </div>
+                <div style={{ width: '40%', height: '15vh',padding:'2rem' }}>
+                    <fieldset>
+                        <legend>Remote Video</legend>
+                        <video width='100%' height='100%' className='remotestreamvideo' id='remotestreamvideo' ref={remoteStreamVideoRef} autoPlay playsInline></video>
+                        <audio className='remotestreamaudio' id='remotestreamaudio' ref={remoteStreamAudioRef} autoPlay></audio>
+                    </fieldset>
+                </div>
             </div>
         </div>
     )

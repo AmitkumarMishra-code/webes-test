@@ -1,6 +1,6 @@
 import Webex from 'webex'
 import { useEffect, useRef, useState } from 'react';
-const accessToken = 'NTA5MTUyZDMtZTZkYS00MmNiLWJmYTktMjk0ZDc5NjllMGE1OGFkZmQ1ZmEtMDFj_P0A1_a7012a36-a278-4b69-929e-ec5cc7b86d17';
+const accessToken = 'OTI3NDZmNmQtZjFjNi00NWI2LTgxOTAtYmMzMGMzODdjOWMyZjFjNTIzNmYtYjE3_P0A1_a7012a36-a278-4b69-929e-ec5cc7b86d17';
 let webex
 let currentMediaStreams = []
 let conversationURL = 'https://conv-r.wbx2.com/conversation/api/v1/conversations/3809de60-122a-11ec-a32a-13d19edd46e0'
@@ -21,7 +21,8 @@ export default function JoinMeeting() {
     // const [meetingObject, setMeetingObject] = useState(null)
     const [meetingCurrentDetails, setMeetingCurrentDetails] = useState(null)
     const localStreamRef = useRef()
-    const remoteStreamRef = useRef()
+    const remoteStreamVideoRef = useRef()
+    const remoteStreamAudioRef = useRef()
 
     const initWebex = () => {
         console.log('Authentication#initWebex()');
@@ -154,11 +155,11 @@ export default function JoinMeeting() {
             switch (media.type) {
                 case 'remoteVideo':
                     console.log('remote video')
-                    remoteStreamRef.current.srcObject = media.stream;
+                    remoteStreamVideoRef.current.srcObject = media.stream;
                     break;
                 case 'remoteAudio':
                     console.log('remote audio')
-                    //   meetingStreamsRemoteAudio.srcObject = media.stream;
+                    remoteStreamAudioRef.current.srcObject = media.stream;
                     break;
                 case 'remoteShare':
                     console.log('remote share')
@@ -194,7 +195,7 @@ export default function JoinMeeting() {
                  * We default back to previous stream in this case.
                  */
                 currentMediaStreams = [localStream || currLocalStream, localShare || currLocalShare];
-                meeting.updateShare({sendShare: true, receiveShare:true, stream: localShare})
+                // meeting.updateShare({ sendShare: true, receiveShare: true, stream: localShare })
                 return currentMediaStreams;
             })
             .then(([localStream]) => {
@@ -203,7 +204,7 @@ export default function JoinMeeting() {
                     localStreamRef.current.srcObject = localStream;
                     addMedia(meeting)
                 }
-                
+
                 return { localStream };
             })
             .catch((error) => {
@@ -215,7 +216,7 @@ export default function JoinMeeting() {
     }
 
 
-    const joinMeetingHandler = async() => {
+    const joinMeetingHandler = async () => {
         conversationURL = meetingIdRef.current.value
         let myMeeting = await webex.meetings.create(conversationURL)
         // setMeetingObject(myMeeting)
@@ -246,11 +247,20 @@ export default function JoinMeeting() {
             {meetingCurrentDetails && <p>{meetingCurrentDetails}</p>}
             <button onClick={leaveMeeting}>Leave</button>
 
-            <div style={{ width: '30vw', height: '20vh' }}>
-                <video className='localstream' id='localstream' ref={localStreamRef} autoPlay playsInline></video>
-            </div>
-            <div style={{ width: '30vw', height: '20vh' }}>
-                <video className='remotestream' id='remotestream' ref={remoteStreamRef} autoPlay playsInline></video>
+            <div className="video" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', width: '100%' }}>
+                <div style={{ width: '40%', height: '15vh', padding: '2rem' }}>
+                    <fieldset>
+                        <legend>Local Video</legend>
+                        <video width='100%' height='100%' className='localstream' id='localstream' ref={localStreamRef} autoPlay playsInline></video>
+                    </fieldset>
+                </div>
+                <div style={{ width: '40%', height: '15vh', padding: '2rem' }}>
+                    <fieldset>
+                        <legend>Remote Video</legend>
+                        <video width='100%' height='100%' className='remotestreamvideo' id='remotestreamvideo' ref={remoteStreamVideoRef} autoPlay playsInline></video>
+                        <audio className='remotestreamaudio' id='remotestreamaudio' ref={remoteStreamAudioRef} autoPlay></audio>
+                    </fieldset>
+                </div>
             </div>
         </div>
     )
